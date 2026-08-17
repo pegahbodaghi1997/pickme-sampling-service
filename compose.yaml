@@ -1,0 +1,9 @@
+services:
+  sampler:
+    build: .
+    ports:
+      - "8501:8501"
+    env_file: .env
+    volumes:
+      - ./configs:/app/configs:ro
+    restart: unless-stopped

@@ -1,0 +1,61 @@
+app:
+  title: Cohort Sampler
+  subtitle: Build reproducible samples and balanced experiment groups
+  primary_color: "#4f46e5"
+  max_sample_size: 100000
+  split_iterations: 250
+
+databases:
+  analytics:
+    engine: clickhouse
+    env_prefix: ANALYTICS_DB
+
+cohorts:
+  - key: account_activity
+    title: Account activity
+    description: Sample accounts by activity, plan, and region.
+    database: analytics
+    allowed_roles: [all, accounts]
+    base_query: |
+      SELECT
+        account_id,
+        event_date,
+        region,
+        plan,
+        lifecycle_stage,
+        events,
+        conversions
+      FROM analytics.account_activity
+    id_columns: [account_id]
+    date_filter:
+      label: Activity date
+      column: event_date
+    filters:
+      - key: region
+        label: Region
+        column: region
+        values_query: SELECT DISTINCT region FROM analytics.account_activity WHERE region IS NOT NULL ORDER BY region
+      - key: plan
+        label: Plan
+        column: plan
+        values: [free, standard, premium]
+      - key: lifecycle_stage
+        label: Lifecycle stage
+        column: lifecycle_stage
+        values: [new, active, retained, dormant]
+    metrics:
+      - key: events
+        label: Event count
+        column: events
+        default_min: 0
+        step: 1
+      - key: conversions
+        label: Conversion count
+        column: conversions
+        default_min: 0
+        step: 1
+    stratify_columns:
+      - label: Plan
+        column: plan
+      - label: Region
+        column: region
